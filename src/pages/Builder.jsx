@@ -16,6 +16,7 @@ import EventSelection from "../components/builder/EventSelection";
 import DetailsForm from "../components/builder/DetailsForm";
 import gsap from "gsap";
 import PublishSuccess from "../components/builder/PublishSuccess";
+import PublishSuccessModal from "../components/publish/PublishSuccessModal";
 
 import { useState, useRef, useEffect } from "react";
 export default function Builder() {
@@ -41,6 +42,8 @@ export default function Builder() {
   const [revealStarted, setRevealStarted] = useState(false);
   const [revealFinished, setRevealFinished] = useState(false);
   const [letterPhoto, setLetterPhoto] = useState(null);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+const [shareLink, setShareLink] = useState("");
   useEffect(() => {
   if (giftOpened && contentRef.current) {
     gsap.fromTo(
@@ -168,6 +171,7 @@ export default function Builder() {
   onClick={async () => {
 
     console.log("STEP 1");
+    console.log("MUSIC STATE:", music);
 
     const result = await publishWebsite({
 
@@ -198,9 +202,9 @@ export default function Builder() {
     console.log(result);
 if (result.success) {
 
-  alert(`Website Published!
+  setShareLink(result.shareLink);
 
-${result.shareLink}`);
+  setShowPublishModal(true);
 
 }
     setPublished(true);
@@ -305,6 +309,12 @@ ${result.shareLink}`);
 )}
 
 
+{showPublishModal && (
+  <PublishSuccessModal
+    shareLink={shareLink}
+    onClose={() => setShowPublishModal(false)}
+  />
+)}
 
 
 </div>

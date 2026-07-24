@@ -8,6 +8,7 @@ export default function MusicUpload({
 
     if (file) {
       setMusic({
+  file: file,
   name: file.name,
   url: URL.createObjectURL(file),
 });
