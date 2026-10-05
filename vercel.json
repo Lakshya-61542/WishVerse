@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/builder", "destination": "/index.html" },
+    { "source": "/wish/:path*", "destination": "/index.html" }
+  ]
+}

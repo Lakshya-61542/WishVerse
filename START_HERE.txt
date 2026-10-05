@@ -1,0 +1,33 @@
+WISHVERSE PREMIUM — START HERE
+
+1) Open the WishVerse folder in VS Code.
+2) Open Terminal.
+3) Run:
+
+   npm install
+
+4) Create .env from .env.example.
+
+   Windows CMD:
+   copy .env.example .env
+
+   PowerShell:
+   Copy-Item .env.example .env
+
+5) Put your existing Supabase URL + publishable/anon key into .env.
+6) Run:
+
+   npm run dev
+
+7) Test these combinations first:
+   - Birthday + Aurora
+   - Anniversary + Romantic
+   - Wedding + Champagne
+   - Graduation + Midnight
+   - Friendship + Ocean
+
+8) Before pushing to Vercel:
+
+   npm run build
+
+This ZIP intentionally does not include your private .env or node_modules.
