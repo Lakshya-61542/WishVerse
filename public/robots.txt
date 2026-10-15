@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /builder
+Disallow: /login
+Disallow: /signup
+Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /wish/
+
+Sitemap: https://wish-verse-nu.vercel.app/sitemap.xml

@@ -14,7 +14,8 @@ export async function uploadGallery(images = [], slug) {
   // existing upload code...
 
     const extension = image.file.name.split(".").pop();
-    const fileName = `${slug}/${index}.${extension}`;
+    const fileName =
+  `${userId}/${slug}/${index + 1}.${extension}`;
     const { error } = await supabase.storage.from("gallery").upload(fileName, image.file, { upsert: true });
     if (error) throw error;
     const { data } = supabase.storage.from("gallery").getPublicUrl(fileName);

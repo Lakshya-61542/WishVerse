@@ -14,20 +14,59 @@ function slugify(value) {
 
 async function availableSlug(base) {
   for (let i = 0; i < 20; i += 1) {
-    const candidate = i === 0 ? base : `${base}-${i + 1}`;
+    const candidate =
+      i === 0
+        ? base
+        : `${base}-${i + 1}`;
 
-    const { data, error } = await supabase
-      .from("websites")
-      .select("slug")
-      .eq("slug", candidate)
-      .maybeSingle();
+    const { data, error } =
+      await supabase
+        .from("websites")
+        .select("slug")
+        .eq("slug", candidate)
+        .maybeSingle();
 
     if (error) throw error;
 
     if (!data) return candidate;
   }
 
-  return `${base}-${Date.now().toString().slice(-6)}`;
+  return `${base}-${Date.now()
+    .toString()
+    .slice(-6)}`;
+}
+
+/*
+  Securely stores the passcode hash
+  inside public.wish_secrets.
+
+  The actual PIN is never stored
+  inside public.websites.
+*/
+async function setWishPasscode(
+  websiteId,
+  password
+) {
+  const cleanPassword =
+    String(password || "").trim();
+
+  if (!cleanPassword) {
+    throw new Error(
+      "Please enter a passcode before publishing your Wish."
+    );
+  }
+
+  const { error } =
+    await supabase.rpc(
+      "set_wish_passcode",
+      {
+        wish_id: websiteId,
+        new_passcode:
+          cleanPassword,
+      }
+    );
+
+  if (error) throw error;
 }
 
 /*
@@ -35,45 +74,94 @@ async function availableSlug(base) {
   - newly selected gallery files
   - already uploaded gallery URLs while editing
 */
-async function uploadGalleryForPublish(images = [], slug) {
+async function uploadGalleryForPublish(
+  images = [],
+  slug,
+  userId
+) {
   const galleryUrls = [];
 
-  for (let index = 0; index < images.length; index += 1) {
+  for (
+    let index = 0;
+    index < images.length;
+    index += 1
+  ) {
     const image = images[index];
 
-    // Existing database URL stored directly as string
-    if (typeof image === "string") {
+    /*
+     * EXISTING DATABASE URL
+     */
+
+    if (
+      typeof image === "string"
+    ) {
       galleryUrls.push(image);
       continue;
     }
 
-    // Existing image loaded into Builder
-    if (image?.existing && (image.url || image.preview)) {
-      galleryUrls.push(image.url || image.preview);
+    /*
+     * EXISTING IMAGE LOADED
+     * INTO BUILDER
+     */
+
+    if (
+      image?.existing &&
+      (image.url ||
+        image.preview)
+    ) {
+      galleryUrls.push(
+        image.url ||
+          image.preview
+      );
+
       continue;
     }
 
-    // Nothing new to upload
-    if (!image?.file) continue;
+    /*
+     * NOTHING TO UPLOAD
+     */
+
+    if (!image?.file) {
+      continue;
+    }
+
+    /*
+     * NEW FILE
+     */
 
     const extension =
-      image.file.name.split(".").pop()?.toLowerCase() || "jpg";
+      image.file.name
+        .split(".")
+        .pop()
+        ?.toLowerCase() ||
+      "jpg";
 
-    const fileName = `${slug}/${index + 1}.${extension}`;
+    const fileName =
+  `${userId}/${slug}/${index + 1}.${extension}`;
 
-    const { error } = await supabase.storage
-      .from("gallery")
-      .upload(fileName, image.file, {
-        upsert: true,
-      });
+    const { error } =
+      await supabase.storage
+        .from("gallery")
+        .upload(
+          fileName,
+          image.file,
+          {
+            upsert: true,
+          }
+        );
 
     if (error) throw error;
 
-    const { data } = supabase.storage
-      .from("gallery")
-      .getPublicUrl(fileName);
+    const { data } =
+      supabase.storage
+        .from("gallery")
+        .getPublicUrl(
+          fileName
+        );
 
-    galleryUrls.push(data.publicUrl);
+    galleryUrls.push(
+      data.publicUrl
+    );
   }
 
   return galleryUrls;
@@ -83,7 +171,10 @@ export async function publishWebsite(
   data,
   onProgress = () => {}
 ) {
-  const progress = (value, status) =>
+  const progress = (
+    value,
+    status
+  ) =>
     onProgress({
       progress: value,
       status,
@@ -94,14 +185,20 @@ export async function publishWebsite(
      * 1. REQUIRE AUTHENTICATION
      */
 
-    progress(3, "Checking your account");
+    progress(
+      3,
+      "Checking your account"
+    );
 
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser();
+    } =
+      await supabase.auth.getUser();
 
-    if (userError) throw userError;
+    if (userError) {
+      throw userError;
+    }
 
     if (!user) {
       throw new Error(
@@ -110,25 +207,62 @@ export async function publishWebsite(
     }
 
     /*
-     * 2. DETERMINE WHETHER THIS IS CREATE OR EDIT
+     * 2. REQUIRE PASSCODE
      */
 
-    const isEditing = Boolean(data.editId);
+ const isEditing = Boolean(
+  data.editId
+);
 
-    let existingWebsite = null;
+const cleanPassword = String(
+  data.password || ""
+).trim();
+
+/*
+ * New Wishes MUST have a passcode.
+ *
+ * While editing, an empty field means:
+ * keep the current secure passcode.
+ */
+if (
+  !isEditing &&
+  !cleanPassword
+) {
+  throw new Error(
+    "Please enter a 6-digit passcode before publishing your Wish."
+  );
+}
+
+    let existingWebsite =
+      null;
+
     let slug;
 
     if (isEditing) {
-      progress(6, "Loading your existing Wish");
+      progress(
+        6,
+        "Loading your existing Wish"
+      );
 
-      const { data: existing, error } = await supabase
+      const {
+        data: existing,
+        error,
+      } = await supabase
         .from("websites")
         .select("*")
-        .eq("id", data.editId)
-        .eq("owner_id", user.id)
+        .eq(
+          "id",
+          data.editId
+        )
+        .eq(
+          "owner_id",
+          user.id
+        )
         .single();
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       if (!existing) {
         throw new Error(
@@ -136,158 +270,256 @@ export async function publishWebsite(
         );
       }
 
-      existingWebsite = existing;
+      existingWebsite =
+        existing;
+
+        const {
+  data: existingSecret,
+  error: secretError,
+} = await supabase
+  .from("wish_secrets")
+  .select("website_id")
+  .eq(
+    "website_id",
+    data.editId
+  )
+  .maybeSingle();
+
+if (secretError) {
+  throw secretError;
+}
+
+/*
+ * If this is an older Wish with no secure
+ * passcode yet, require the creator to
+ * create one before republishing it.
+ */
+if (
+  !existingSecret &&
+  !cleanPassword
+) {
+  throw new Error(
+    "This Wish needs a secure passcode. Enter a new 6-digit passcode before saving."
+  );
+}
 
       /*
-       * IMPORTANT:
-       * Keep the same slug while editing.
-       *
-       * Therefore the public link remains:
-       *
-       * /wish/original-slug
+       * Keep original slug while editing.
        */
-      slug = existingWebsite.slug;
+      slug =
+        existingWebsite.slug;
 
-      progress(10, "Preparing your update");
+      progress(
+        10,
+        "Preparing your update"
+      );
     } else {
-      progress(5, "Reserving your link");
+      progress(
+        5,
+        "Reserving your link"
+      );
 
       const rawSlug =
         data.websiteName?.trim() ||
-        `${data.recipientName || "my"}-${
-          data.selectedEvent || "wish"
+        `${
+          data.recipientName ||
+          "my"
+        }-${
+          data.selectedEvent ||
+          "wish"
         }`;
 
       const baseSlug =
-        slugify(rawSlug) || `wish-${Date.now()}`;
+        slugify(rawSlug) ||
+        `wish-${Date.now()}`;
 
-      slug = await availableSlug(baseSlug);
+      slug =
+        await availableSlug(
+          baseSlug
+        );
 
-      progress(10, "Your link is ready");
+      progress(
+        10,
+        "Your link is ready"
+      );
     }
 
     /*
-     * 3. COVER IMAGE
+     * 4. COVER IMAGE
      */
 
-    progress(15, "Preparing cover photo");
+    progress(
+      15,
+      "Preparing cover photo"
+    );
 
     let coverImageUrl = null;
 
-    // User selected a NEW cover image
-    if (data.coverImage?.file) {
+    if (
+      data.coverImage?.file
+    ) {
       const extension =
         data.coverImage.file.name
           .split(".")
           .pop()
-          ?.toLowerCase() || "jpg";
+          ?.toLowerCase() ||
+        "jpg";
 
-      const fileName = `${slug}/cover.${extension}`;
+      const fileName =
+  `${user.id}/${slug}/cover.${extension}`;
 
-      const { error } = await supabase.storage
-        .from("cover-images")
-        .upload(fileName, data.coverImage.file, {
-          upsert: true,
-        });
+      const { error } =
+        await supabase.storage
+          .from(
+            "cover-images"
+          )
+          .upload(
+            fileName,
+            data.coverImage
+              .file,
+            {
+              upsert: true,
+            }
+          );
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      const { data: publicData } = supabase.storage
-        .from("cover-images")
-        .getPublicUrl(fileName);
+      const {
+        data: publicData,
+      } =
+        supabase.storage
+          .from(
+            "cover-images"
+          )
+          .getPublicUrl(
+            fileName
+          );
 
-      coverImageUrl = publicData.publicUrl;
-    }
-
-    // Existing image loaded into Builder
-    else if (
-      data.coverImage?.existing &&
+      coverImageUrl =
+        publicData.publicUrl;
+    } else if (
+      data.coverImage
+        ?.existing &&
       (data.coverImage.url ||
-        data.coverImage.preview)
+        data.coverImage
+          .preview)
     ) {
       coverImageUrl =
         data.coverImage.url ||
-        data.coverImage.preview;
-    }
-
-    // Extra fallback during editing
-    else if (isEditing) {
+        data.coverImage
+          .preview;
+    } else if (isEditing) {
       coverImageUrl =
-        existingWebsite.cover_image || null;
+        existingWebsite
+          .cover_image ||
+        null;
     }
 
     /*
-     * 4. GALLERY
+     * 5. GALLERY
      */
 
-    progress(35, "Uploading memory gallery");
+    progress(
+      35,
+      "Uploading memory gallery"
+    );
 
     const gallery =
-      await uploadGalleryForPublish(
-        data.images || [],
-        slug
-      );
+  await uploadGalleryForPublish(
+    data.images || [],
+    slug,
+    user.id
+  );
 
     /*
-     * 5. LETTER PHOTO
+     * 6. LETTER PHOTO
      */
 
-    progress(58, "Adding your letter photo");
+    progress(
+      58,
+      "Adding your letter photo"
+    );
 
-    let letterPhotoUrl = null;
+    let letterPhotoUrl =
+      null;
 
-    if (data.letterPhoto?.file) {
+    if (
+      data.letterPhoto?.file
+    ) {
       letterPhotoUrl =
-        await uploadLetterPhoto(
-          data.letterPhoto,
-          slug
-        );
+  await uploadLetterPhoto(
+    data.letterPhoto,
+    slug,
+    user.id
+  );
     } else if (
-      data.letterPhoto?.existing &&
+      data.letterPhoto
+        ?.existing &&
       (data.letterPhoto.url ||
-        data.letterPhoto.preview)
+        data.letterPhoto
+          .preview)
     ) {
       letterPhotoUrl =
         data.letterPhoto.url ||
-        data.letterPhoto.preview;
+        data.letterPhoto
+          .preview;
     } else if (isEditing) {
       letterPhotoUrl =
-        existingWebsite.letter_photo || null;
+        existingWebsite
+          .letter_photo ||
+        null;
     }
 
     /*
-     * 6. MUSIC
+     * 7. MUSIC
      */
 
-    progress(74, "Uploading soundtrack");
+    progress(
+      72,
+      "Uploading soundtrack"
+    );
 
     let musicUrl = null;
 
     if (data.music?.file) {
-      musicUrl = await uploadMusic(
-        data.music,
-        slug
-      );
+      musicUrl =
+  await uploadMusic(
+    data.music,
+    slug,
+    user.id
+  );
     } else if (
       data.music?.existing &&
       data.music.url
     ) {
-      musicUrl = data.music.url;
+      musicUrl =
+        data.music.url;
     } else if (isEditing) {
       musicUrl =
-        existingWebsite.music || null;
+        existingWebsite.music ||
+        null;
     }
 
     /*
-     * 7. UPDATE EXISTING WEBSITE
+     * 8. EDIT EXISTING WISH
      */
 
     if (isEditing) {
-      progress(90, "Saving your changes");
+      /*
+       * First keep the Wish private
+       * while security is updated.
+       */
+
+      progress(
+        84,
+        "Saving your changes"
+      );
 
       const {
-        data: updatedWebsite,
-        error,
+        data: updatedDraft,
+        error: updateError,
       } = await supabase
         .from("websites")
         .update({
@@ -300,8 +532,10 @@ export async function publishWebsite(
           theme:
             data.selectedTheme,
 
-          password:
-            data.password,
+          /*
+           * IMPORTANT:
+           * Never save plaintext PIN.
+           */
 
           message:
             data.message,
@@ -317,17 +551,88 @@ export async function publishWebsite(
           music:
             musicUrl,
 
-          published: true,
+          /*
+           * Temporarily private
+           * while passcode hash
+           * is updated.
+           */
+          published: false,
 
           updated_at:
-            new Date().toISOString(),
+            new Date()
+              .toISOString(),
         })
-        .eq("id", data.editId)
-        .eq("owner_id", user.id)
+        .eq(
+          "id",
+          data.editId
+        )
+        .eq(
+          "owner_id",
+          user.id
+        )
         .select()
         .single();
 
-      if (error) throw error;
+      if (updateError) {
+        throw updateError;
+      }
+
+      /*
+       * HASH + STORE PASSCODE
+       */
+
+      progress(
+        91,
+        "Securing your Wish"
+      );
+
+      if (cleanPassword) {
+  await setWishPasscode(
+    updatedDraft.id,
+    cleanPassword
+  );
+}
+
+      /*
+       * ONLY NOW MAKE IT PUBLIC
+       */
+
+      progress(
+        96,
+        "Publishing your update"
+      );
+
+      const {
+        data: updatedWebsite,
+        error: publishError,
+      } = await supabase
+        .from("websites")
+        .update({
+          published: true,
+
+          /*
+           * Extra safety.
+           */
+
+
+          updated_at:
+            new Date()
+              .toISOString(),
+        })
+        .eq(
+          "id",
+          updatedDraft.id
+        )
+        .eq(
+          "owner_id",
+          user.id
+        )
+        .select()
+        .single();
+
+      if (publishError) {
+        throw publishError;
+      }
 
       progress(
         100,
@@ -337,55 +642,131 @@ export async function publishWebsite(
       return {
         success: true,
 
-        website: updatedWebsite,
+        website:
+          updatedWebsite,
 
         updated: true,
 
-        shareLink: `${window.location.origin}/wish/${updatedWebsite.slug}`,
+        shareLink:
+          `${window.location.origin}/wish/${updatedWebsite.slug}`,
       };
     }
 
     /*
-     * 8. CREATE NEW WEBSITE
+     * 9. CREATE NEW WISH
      */
 
-    progress(90, "Saving your WishVerse");
+    progress(
+      84,
+      "Saving your WishVerse"
+    );
 
-    const website = await saveWebsite({
-      owner_id: user.id,
+    /*
+     * Save as PRIVATE first.
+     *
+     * This means the Wish cannot
+     * become publicly accessible
+     * before its passcode is secured.
+     */
 
-      slug,
+    const website =
+      await saveWebsite({
+        owner_id: user.id,
 
-      website_name: slug,
+        slug,
 
-      recipient_name:
-        data.recipientName,
+        website_name: slug,
 
-      event_type:
-        data.selectedEvent,
+        recipient_name:
+          data.recipientName,
 
-      theme:
-        data.selectedTheme,
+        event_type:
+          data.selectedEvent,
 
-      password:
-        data.password,
+        theme:
+          data.selectedTheme,
 
-      message:
-        data.message,
+        /*
+         * NEVER STORE THE
+         * PLAINTEXT PASSCODE.
+         */
 
-      cover_image:
-        coverImageUrl,
+        message:
+          data.message,
 
-      gallery,
+        cover_image:
+          coverImageUrl,
 
-      letter_photo:
-        letterPhotoUrl,
+        gallery,
 
-      music:
-        musicUrl,
+        letter_photo:
+          letterPhotoUrl,
 
-      published: true,
-    });
+        music:
+          musicUrl,
+
+        /*
+         * Private until hashing
+         * succeeds.
+         */
+        published: false,
+      });
+
+    if (!website?.id) {
+      throw new Error(
+        "Wish was created but no website ID was returned."
+      );
+    }
+
+    /*
+     * 10. SECURE PASSCODE
+     */
+
+    progress(
+      92,
+      "Securing your Wish"
+    );
+
+    await setWishPasscode(
+      website.id,
+      cleanPassword
+    );
+
+    /*
+     * 11. MAKE WISH PUBLIC
+     */
+
+    progress(
+      97,
+      "Publishing your Wish"
+    );
+
+    const {
+      data: publishedWebsite,
+      error: publishError,
+    } = await supabase
+      .from("websites")
+      .update({
+        published: true,
+
+        updated_at:
+          new Date()
+            .toISOString(),
+      })
+      .eq(
+        "id",
+        website.id
+      )
+      .eq(
+        "owner_id",
+        user.id
+      )
+      .select()
+      .single();
+
+    if (publishError) {
+      throw publishError;
+    }
 
     progress(
       100,
@@ -395,11 +776,13 @@ export async function publishWebsite(
     return {
       success: true,
 
-      website,
+      website:
+        publishedWebsite,
 
       updated: false,
 
-      shareLink: `${window.location.origin}/wish/${website.slug}`,
+      shareLink:
+        `${window.location.origin}/wish/${publishedWebsite.slug}`,
     };
   } catch (error) {
     console.error(

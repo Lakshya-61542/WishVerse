@@ -1,35 +1,112 @@
-import { Link } from "react-router-dom";
+import { ArrowLeft, FileText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Logo from "../components/common/Logo";
 
 export default function Terms() {
+  const navigate = useNavigate();
+
   return (
-    <LegalPage title="Terms of Use">
-      <p>WishVerse lets creators build and share personalized surprise websites. Use the service only for content you have permission to upload and share.</p>
-      <h2>Accounts</h2>
-      <p>You are responsible for keeping your account secure and for activity performed through it.</p>
-      <h2>Uploaded content</h2>
-      <p>You retain responsibility for photos, music, messages and other material you upload. Do not upload illegal, abusive or rights-infringing content.</p>
-      <h2>Availability</h2>
-      <p>WishVerse may change, improve or temporarily interrupt features as the product evolves.</p>
-      <h2>Contact</h2>
-      <p>For account or product questions, use the contact details published by the WishVerse operator.</p>
-    </LegalPage>
+    <div className="min-h-screen bg-gradient-to-br from-[#faf8ff] via-white to-[#eefbff] text-slate-900">
+      <header className="sticky top-0 z-50 border-b border-violet-100 bg-white/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-5 sm:px-8">
+          <button onClick={() => navigate("/")}>
+            <Logo variant="light" />
+          </button>
+
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
+        <div className="rounded-[32px] border border-violet-100 bg-white p-7 shadow-[0_24px_70px_rgba(76,45,108,.08)] sm:p-10">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+            <FileText className="h-5 w-5" />
+          </div>
+
+          <div className="mt-6 text-xs font-black uppercase tracking-[0.22em] text-violet-600">
+            WishVerse
+          </div>
+
+          <h1 className="mt-3 text-4xl font-black tracking-[-0.04em]">
+            Terms of Use
+          </h1>
+
+          <p className="mt-3 text-sm text-slate-400">
+            Effective: October 16, 2026
+          </p>
+
+          <div className="mt-10 space-y-8 text-sm leading-7 text-slate-600">
+            <Term title="1. Using WishVerse">
+              WishVerse allows users to create and share personalized digital
+              experiences for celebrations and special occasions. By using the
+              service, you agree to use it lawfully and responsibly.
+            </Term>
+
+            <Term title="2. Your account">
+              You are responsible for activity performed through your account
+              and for maintaining access to your authentication method.
+            </Term>
+
+            <Term title="3. Your content">
+              You retain responsibility for the photos, music, text and other
+              material that you upload. You must have the necessary rights or
+              permission to upload and share that content.
+            </Term>
+
+            <Term title="4. Prohibited use">
+              You may not use WishVerse to distribute unlawful, abusive,
+              deceptive, malicious, infringing or harmful material, interfere
+              with the service, attempt unauthorized access, or misuse another
+              person's account or content.
+            </Term>
+
+            <Term title="5. Shared links">
+              Published Wish links may be shared with other people. A passcode
+              can reduce casual access but should not be treated as a guarantee
+              that highly sensitive information will remain confidential.
+            </Term>
+
+            <Term title="6. Availability">
+              WishVerse may change, improve, suspend or discontinue features as
+              the product evolves. Continuous or error-free availability cannot
+              be guaranteed.
+            </Term>
+
+            <Term title="7. Third-party services">
+              WishVerse may depend on third-party infrastructure or
+              authentication providers. Their services may be subject to their
+              own terms and policies.
+            </Term>
+
+            <Term title="8. Limitation of responsibility">
+              Users are responsible for deciding what content they create,
+              upload and share. WishVerse is provided on an as-available basis
+              to the extent permitted by applicable law.
+            </Term>
+
+            <Term title="9. Changes">
+              These Terms may be updated as WishVerse develops. Continued use
+              after an updated version becomes effective constitutes acceptance
+              of the revised Terms where permitted by law.
+            </Term>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }
 
-function LegalPage({ title, children }) {
+function Term({ title, children }) {
   return (
-    <div className="min-h-screen bg-[#f8f7fc] text-slate-700">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-5">
-          <Link to="/"><Logo variant="light" /></Link>
-          <Link to="/" className="text-sm font-bold text-violet-700">Back home</Link>
-        </div>
-      </header>
-      <main className="mx-auto max-w-3xl px-5 py-12">
-        <h1 className="text-4xl font-black tracking-[-0.04em] text-slate-950">{title}</h1>
-        <div className="legal-copy mt-8 space-y-5 leading-7">{children}</div>
-      </main>
-    </div>
+    <section>
+      <h2 className="text-lg font-black text-slate-900">{title}</h2>
+      <p className="mt-2">{children}</p>
+    </section>
   );
 }

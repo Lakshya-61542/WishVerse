@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import PublicOnlyRoute from "./components/auth/PublicOnlyRoute";
 import AuthCallback from "./pages/AuthCallback";
@@ -14,7 +14,7 @@ import PublicReveal from "./pages/PublicReveal";
 import ResetPassword from "./pages/ResetPassword";
 import Signup from "./pages/Signup";
 import Terms from "./pages/Terms";
-
+import NotFound from "./pages/NotFound";
 export default function App() {
   return (
     <Routes>
@@ -36,7 +36,7 @@ export default function App() {
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
