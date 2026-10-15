@@ -1,0 +1,43 @@
+WISHVERSE — START HERE
+
+1) Open this folder in VS Code.
+
+2) Install dependencies:
+   npm install
+
+3) Create your local environment file:
+   Windows CMD:
+     copy .env.example .env
+
+   PowerShell:
+     Copy-Item .env.example .env
+
+4) Put your Supabase values in .env:
+   VITE_SUPABASE_URL=...
+   VITE_SUPABASE_ANON_KEY=...
+
+5) Run:
+   npm run dev
+
+6) Open the local URL shown by Vite.
+
+7) For Google sign-in:
+   Read AUTH_SETUP.md
+   Configure Google Cloud OAuth + Supabase Authentication → Providers → Google.
+
+8) Before production:
+   Run/review supabase/production_setup.sql
+   Add the same VITE_SUPABASE_* variables in Vercel
+   Run npm run build
+   Push to GitHub / deploy to Vercel
+
+New account flow included:
+- Continue with Google
+- Email/password
+- show/hide password
+- email confirmation
+- forgot/reset password
+- dashboard + profile
+- smooth auth transitions
+
+Do not commit .env or private API keys.

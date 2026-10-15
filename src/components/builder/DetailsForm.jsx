@@ -1,0 +1,4 @@
+import { UserRound } from "lucide-react";
+export default function DetailsForm({ recipientName, setRecipientName }) {
+  return <div><div className="mb-8"><div className="builder-kicker"><UserRound className="h-3.5 w-3.5"/> Personal touch</div><h1 className="builder-title">Who is this for?</h1><p className="builder-subtitle">Their name will appear throughout the reveal and in AI-assisted writing.</p></div><label className="mb-2 block text-xs font-bold uppercase tracking-[.15em] text-[#8c8094]">Recipient name</label><input autoFocus type="text" placeholder="e.g. Aanya" value={recipientName} onChange={(e)=>setRecipientName(e.target.value)} className="w-full rounded-2xl border border-violet-100 bg-[#fbf9ff] px-5 py-4 text-base text-[#2b2037] shadow-inner outline-none placeholder:text-[#b7adbd] focus:border-violet-300 focus:bg-white focus:ring-4 focus:ring-violet-100/60"/></div>;
+}
