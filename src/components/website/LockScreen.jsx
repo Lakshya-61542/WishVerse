@@ -6,6 +6,8 @@ import {
 
 export default function LockScreen({
   onVerifyPin,
+  correctPin,
+  onUnlock,
 }) {
   const [pin, setPin] =
     useState("");
@@ -19,59 +21,81 @@ export default function LockScreen({
   /*
    * VERIFY COMPLETE 6-DIGIT PIN
    */
-  async function verifyPin(
-    enteredPin
+async function verifyPin(enteredPin) {
+  if (
+    checking ||
+    enteredPin.length !== 6
   ) {
-    if (
-      checking ||
-      enteredPin.length !== 6
-    ) {
+    return;
+  }
+
+  setChecking(true);
+  setError(false);
+
+  try {
+    let valid = false;
+
+    /*
+     * PUBLIC WEBSITE
+     *
+     * Uses secure Supabase RPC through PublicReveal.
+     */
+    if (onVerifyPin) {
+      valid =
+        await onVerifyPin(
+          enteredPin
+        );
+    }
+
+    /*
+     * BUILDER PREVIEW
+     *
+     * The Wish hasn't been published yet,
+     * so compare against the temporary
+     * Builder password state locally.
+     */
+    else if (correctPin) {
+      valid =
+        String(enteredPin) ===
+        String(correctPin).trim();
+
+      if (valid) {
+        onUnlock?.();
+      }
+    }
+
+    /*
+     * SUCCESS
+     */
+    if (valid) {
       return;
     }
 
-    setChecking(true);
-    setError(false);
+    /*
+     * WRONG PIN
+     */
+    setError(true);
 
-    try {
-      const valid =
-        await onVerifyPin?.(
-          enteredPin
-        );
+    setTimeout(() => {
+      setPin("");
+      setError(false);
+    }, 900);
+  } catch (error) {
+    console.error(
+      "PIN verification error:",
+      error
+    );
 
-      /*
-       * If valid, PublicReveal will
-       * switch unlocked = true and
-       * this component disappears.
-       */
-      if (valid) {
-        return;
-      }
+    setError(true);
 
-      /*
-       * WRONG PIN
-       */
-      setError(true);
-
-      setTimeout(() => {
-        setPin("");
-        setError(false);
-      }, 900);
-    } catch (error) {
-      console.error(
-        "PIN verification error:",
-        error
-      );
-
-      setError(true);
-
-      setTimeout(() => {
-        setPin("");
-        setError(false);
-      }, 900);
-    } finally {
-      setChecking(false);
-    }
+    setTimeout(() => {
+      setPin("");
+      setError(false);
+    }, 900);
+  } finally {
+    setChecking(false);
   }
+}
 
   /*
    * NUMBER BUTTON
