@@ -6,7 +6,7 @@ import {
   Sparkles,
   WandSparkles,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Background from "../components/common/Background";
 import Hero from "../components/builder/Hero";
 import Logo from "../components/common/Logo";
@@ -43,6 +43,17 @@ const steps = [
   ["03", "Preview the story", "Watch the reveal take shape live while you build."],
   ["04", "Publish & share", "Send one private link they can open on any device."],
 ];
+
+const SEO_ROUTES = {
+  Birthday: "/birthday-surprise-website",
+  Anniversary: "/anniversary-surprise-website",
+  Proposal: "/proposal-website",
+  Wedding: "/wedding-surprise-website",
+  Graduation: "/graduation-surprise-website",
+  Friendship: "/friendship-surprise-website",
+  Farewell: "/farewell-surprise-website",
+  "Valentine's Day": "/valentines-surprise",
+};
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -106,24 +117,65 @@ export default function Landing() {
             </div>
 
             <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {visibleEvents.map((event) => (
-                <button
-                  key={event.title}
-                  onClick={() => {
-                    const builderPath = `/builder?event=${encodeURIComponent(event.title)}`;
-                    navigate(
-                      user
-                        ? builderPath
-                        : `/signup?next=${encodeURIComponent(builderPath)}`
-                    );
-                  }}
-                  className="premium-card group min-h-[190px] p-6 text-left"
-                >
-                  <div className="text-4xl">{event.emoji}</div>
-                  <div className="mt-7 text-lg font-black">{event.title}</div>
-                  <div className="mt-2 text-sm leading-6 text-white/38">{event.tagline}</div>
-                </button>
-              ))}
+              {visibleEvents.map((event) => {
+  const seoRoute = SEO_ROUTES[event.title];
+
+  if (seoRoute) {
+    return (
+      <Link
+        key={event.title}
+        to={seoRoute}
+        className="premium-card group block min-h-[190px] p-6 text-left"
+      >
+        <div className="text-4xl">
+          {event.emoji}
+        </div>
+
+        <div className="mt-7 text-lg font-black">
+          {event.title}
+        </div>
+
+        <div className="mt-2 text-sm leading-6 text-white/38">
+          {event.tagline}
+        </div>
+
+        <div className="mt-5 inline-flex items-center gap-2 text-xs font-black text-violet-300">
+          Explore {event.title} ideas
+          <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
+        </div>
+      </Link>
+    );
+  }
+
+  const builderPath =
+    `/builder?event=${encodeURIComponent(event.title)}`;
+
+  return (
+    <button
+      key={event.title}
+      onClick={() =>
+        navigate(
+          user
+            ? builderPath
+            : `/signup?next=${encodeURIComponent(builderPath)}`
+        )
+      }
+      className="premium-card group min-h-[190px] p-6 text-left"
+    >
+      <div className="text-4xl">
+        {event.emoji}
+      </div>
+
+      <div className="mt-7 text-lg font-black">
+        {event.title}
+      </div>
+
+      <div className="mt-2 text-sm leading-6 text-white/38">
+        {event.tagline}
+      </div>
+    </button>
+  );
+})}
             </div>
           </div>
         </section>
