@@ -1,3 +1,4 @@
+import OccasionSeo from "./pages/OccasionSeo";
 import { Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import PublicOnlyRoute from "./components/auth/PublicOnlyRoute";
@@ -35,6 +36,62 @@ export default function App() {
 
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
+
+      <Route
+  path="/birthday-surprise-website"
+  element={
+    <OccasionSeo slug="birthday-surprise-website" />
+  }
+/>
+
+<Route
+  path="/anniversary-surprise-website"
+  element={
+    <OccasionSeo slug="anniversary-surprise-website" />
+  }
+/>
+
+<Route
+  path="/proposal-website"
+  element={
+    <OccasionSeo slug="proposal-website" />
+  }
+/>
+
+<Route
+  path="/valentines-surprise"
+  element={
+    <OccasionSeo slug="valentines-surprise" />
+  }
+/>
+
+<Route
+  path="/friendship-surprise-website"
+  element={
+    <OccasionSeo slug="friendship-surprise-website" />
+  }
+/>
+
+<Route
+  path="/graduation-surprise-website"
+  element={
+    <OccasionSeo slug="graduation-surprise-website" />
+  }
+/>
+
+<Route
+  path="/farewell-surprise-website"
+  element={
+    <OccasionSeo slug="farewell-surprise-website" />
+  }
+/>
+
+<Route
+  path="/wedding-surprise-website"
+  element={
+    <OccasionSeo slug="wedding-surprise-website" />
+  }
+/>
 
       <Route path="*" element={<NotFound />} />
     </Routes>
