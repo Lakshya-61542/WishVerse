@@ -18,68 +18,345 @@ export default function OccasionSeo({ slug }) {
 
   const page = SEO_OCCASIONS[slug];
 
-  useEffect(() => {
-    if (!page) return;
+useEffect(() => {
+  if (!page) return;
 
-    document.title = page.metaTitle;
+  const pageUrl =
+    `${window.location.origin}/${slug}`;
 
-    let description =
+  /*
+   * PAGE TITLE
+   */
+  document.title = page.metaTitle;
+
+  /*
+   * META DESCRIPTION
+   */
+  let description =
+    document.querySelector(
+      'meta[name="description"]'
+    );
+
+  if (!description) {
+    description =
+      document.createElement("meta");
+
+    description.setAttribute(
+      "name",
+      "description"
+    );
+
+    document.head.appendChild(
+      description
+    );
+  }
+
+  description.setAttribute(
+    "content",
+    page.metaDescription
+  );
+
+  /*
+   * CANONICAL
+   */
+  let canonical =
+    document.querySelector(
+      'link[rel="canonical"]'
+    );
+
+  if (!canonical) {
+    canonical =
+      document.createElement("link");
+
+    canonical.setAttribute(
+      "rel",
+      "canonical"
+    );
+
+    document.head.appendChild(
+      canonical
+    );
+  }
+
+  canonical.setAttribute(
+    "href",
+    pageUrl
+  );
+
+  /*
+   * OPEN GRAPH
+   */
+  function setMeta(
+    selector,
+    attribute,
+    value
+  ) {
+    let element =
       document.querySelector(
-        'meta[name="description"]'
+        selector
       );
 
-    if (!description) {
-      description =
+    if (!element) {
+      element =
         document.createElement(
           "meta"
         );
 
-      description.setAttribute(
-        "name",
-        "description"
+      const [
+        attrName,
+        attrValue,
+      ] =
+        attribute.split("=");
+
+      element.setAttribute(
+        attrName,
+        attrValue
       );
 
       document.head.appendChild(
-        description
+        element
       );
     }
 
-    description.setAttribute(
+    element.setAttribute(
       "content",
-      page.metaDescription
+      value
+    );
+  }
+
+  setMeta(
+    'meta[property="og:title"]',
+    "property=og:title",
+    page.metaTitle
+  );
+
+  setMeta(
+    'meta[property="og:description"]',
+    "property=og:description",
+    page.metaDescription
+  );
+
+  setMeta(
+    'meta[property="og:url"]',
+    "property=og:url",
+    pageUrl
+  );
+
+  setMeta(
+    'meta[property="og:type"]',
+    "property=og:type",
+    "website"
+  );
+
+  /*
+   * TWITTER / X
+   */
+  setMeta(
+    'meta[name="twitter:title"]',
+    "name=twitter:title",
+    page.metaTitle
+  );
+
+  setMeta(
+    'meta[name="twitter:description"]',
+    "name=twitter:description",
+    page.metaDescription
+  );
+
+  /*
+   * STRUCTURED DATA
+   */
+
+  const structuredData = {
+    "@context":
+      "https://schema.org",
+
+    "@graph": [
+      {
+        "@type": "WebPage",
+
+        "@id":
+          `${pageUrl}#webpage`,
+
+        url: pageUrl,
+
+        name:
+          page.metaTitle,
+
+        description:
+          page.metaDescription,
+
+        isPartOf: {
+          "@type":
+            "WebSite",
+
+          name:
+            "WishVerse",
+
+          url:
+            window.location.origin,
+        },
+
+        about: {
+          "@type": "Thing",
+
+          name:
+            page.event,
+        },
+      },
+
+      {
+        "@type":
+          "BreadcrumbList",
+
+        itemListElement: [
+          {
+            "@type":
+              "ListItem",
+
+            position: 1,
+
+            name:
+              "WishVerse",
+
+            item:
+              `${window.location.origin}/`,
+          },
+
+          {
+            "@type":
+              "ListItem",
+
+            position: 2,
+
+            name:
+              page.title,
+
+            item:
+              pageUrl,
+          },
+        ],
+      },
+
+      {
+        "@type":
+          "FAQPage",
+
+        mainEntity: [
+          {
+            "@type":
+              "Question",
+
+            name:
+              "Does the recipient need an account?",
+
+            acceptedAnswer: {
+              "@type":
+                "Answer",
+
+              text:
+                "No. You simply share the published Wish link with them.",
+            },
+          },
+
+          {
+            "@type":
+              "Question",
+
+            name:
+              "Can I add my own photos?",
+
+            acceptedAnswer: {
+              "@type":
+                "Answer",
+
+              text:
+                "Yes. WishVerse is designed around your own memories and photographs.",
+            },
+          },
+
+          {
+            "@type":
+              "Question",
+
+            name:
+              "Can I add music?",
+
+            acceptedAnswer: {
+              "@type":
+                "Answer",
+
+              text:
+                "Yes. You can add a soundtrack to make the reveal more personal.",
+            },
+          },
+
+          {
+            "@type":
+              "Question",
+
+            name:
+              "Can I keep the surprise private?",
+
+            acceptedAnswer: {
+              "@type":
+                "Answer",
+
+              text:
+                "Yes. WishVerse supports passcode-protected reveals.",
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  let script =
+    document.getElementById(
+      "wishverse-structured-data"
     );
 
-    let canonical =
-      document.querySelector(
-        'link[rel="canonical"]'
+  if (!script) {
+    script =
+      document.createElement(
+        "script"
       );
 
-    if (!canonical) {
-      canonical =
-        document.createElement(
-          "link"
-        );
+    script.type =
+      "application/ld+json";
 
-      canonical.setAttribute(
-        "rel",
-        "canonical"
+    script.id =
+      "wishverse-structured-data";
+
+    document.head.appendChild(
+      script
+    );
+  }
+
+  script.textContent =
+    JSON.stringify(
+      structuredData
+    );
+
+  /*
+   * CLEANUP
+   */
+  return () => {
+    document.title =
+      "WishVerse — Moments, made magical";
+
+    const structuredScript =
+      document.getElementById(
+        "wishverse-structured-data"
       );
 
-      document.head.appendChild(
-        canonical
-      );
+    if (
+      structuredScript
+    ) {
+      structuredScript.remove();
     }
-
-    canonical.setAttribute(
-      "href",
-      `${window.location.origin}/${slug}`
-    );
-
-    return () => {
-      document.title =
-        "WishVerse — Moments, made magical";
-    };
-  }, [page, slug]);
+  };
+}, [page, slug]);
 
   if (!page) return null;
 
